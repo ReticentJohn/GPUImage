@@ -199,7 +199,7 @@
 {
     NSError *error = nil;
     AVAssetReader *assetReader = [AVAssetReader assetReaderWithAsset:self.asset error:&error];
-
+    
     NSMutableDictionary *outputSettings = [NSMutableDictionary dictionary];
     if ([GPUImageContext supportsFastTextureUpload]) {
         [outputSettings setObject:@(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) forKey:(id)kCVPixelBufferPixelFormatTypeKey];
@@ -213,12 +213,16 @@
     // Maybe set alwaysCopiesSampleData to NO on iOS 5.0 for faster video decoding
     AVAssetReaderTrackOutput *readerVideoTrackOutput = [AVAssetReaderTrackOutput assetReaderTrackOutputWithTrack:[[self.asset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0] outputSettings:outputSettings];
     readerVideoTrackOutput.alwaysCopiesSampleData = NO;
-    [assetReader addOutput:readerVideoTrackOutput];
-
+    
+    if ([assetReader canAddOutput:readerVideoTrackOutput]) {
+        [assetReader addOutput:readerVideoTrackOutput];
+    }
+    
+    
     NSArray *audioTracks = [self.asset tracksWithMediaType:AVMediaTypeAudio];
     BOOL shouldRecordAudioTrack = (([audioTracks count] > 0) && (self.audioEncodingTarget != nil) );
     AVAssetReaderTrackOutput *readerAudioTrackOutput = nil;
-
+    
     if (shouldRecordAudioTrack)
     {
 #if TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE
@@ -231,9 +235,11 @@
         AVAssetTrack* audioTrack = [audioTracks objectAtIndex:0];
         readerAudioTrackOutput = [AVAssetReaderTrackOutput assetReaderTrackOutputWithTrack:audioTrack outputSettings:nil];
         readerAudioTrackOutput.alwaysCopiesSampleData = NO;
-        [assetReader addOutput:readerAudioTrackOutput];
+        if ([assetReader canAddOutput:readerAudioTrackOutput]) {
+            [assetReader addOutput:readerAudioTrackOutput];
+        }
     }
-
+    
     return assetReader;
 }
 
@@ -255,7 +261,7 @@
         }
     }
 
-    if ([reader startReading] == NO || ![reader canAddOutput:readerVideoTrackOutput])
+    if ([reader startReading] == NO)
     {
         NSLog(@"Error reading from file at URL: %@", self.url);
         return;
