@@ -255,7 +255,7 @@
         }
     }
 
-    if ([reader startReading] == NO || ![reader canAddOutput:readerVideoTrackOutput] || ![reader canAddOutput:readerAudioTrackOutput])
+    if ([reader startReading] == NO || ![reader canAddOutput:readerVideoTrackOutput])
     {
         NSLog(@"Error reading from file at URL: %@", self.url);
         return;
